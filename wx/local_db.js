@@ -50,13 +50,13 @@ function f_info(i1,i2,i3,i4) {
     try {
         if (mlog.f_info == null) {
             console.info("local_db",i1,i2,i3,i4)
-            mlog.f_wx_static_show_toast("local_db:"+mlog.f_static_get_msg(i1,i2,i3,i4))
+            mlog.f_static_show_toast("local_db:"+mlog.f_static_get_msg(i1,i2,i3,i4))
         } else {
             mlog.f_info("local_db", i1, i2, i3, i4)
         }
     } catch (e) {
         console.error("local_db",e)
-        mlog.f_wx_static_show_modal("local_db:"+mlog.f_static_get_msg(e))
+        mlog.f_static_show_modal("local_db:"+mlog.f_static_get_msg(e))
     }
 }
 
@@ -64,11 +64,11 @@ function f_err(e1, e2, e3,e4) {
     try {
         if (mlog.f_err == null) {
             console.error("local_db",e1, e2, e3,e4)
-            mlog.f_wx_static_show_modal("local_db:"+mlog.f_static_get_msg(e1, e2, e3,e4))
+            mlog.f_static_show_modal("local_db:"+mlog.f_static_get_msg(e1, e2, e3,e4))
         } else mlog.f_err("local_db", e1,e2,e3,e4)
     } catch (e) {
         console.error("local_db",e)
-        mlog.f_wx_static_show_modal("local_db:"+mlog.f_static_get_msg(e))
+        mlog.f_static_show_modal("local_db:"+mlog.f_static_get_msg(e))
     }
 }
 

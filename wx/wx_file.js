@@ -1,20 +1,11 @@
 //wxfile://usr
-const USER_DIR = wx.env.USER_DATA_PATH,FSM = wx.getFileSystemManager()
+const USER_DIR = wx.env.USER_DATA_PATH,
+    FSM = wx.getFileSystemManager(),
+    MODULE_MLOG = require("mlog.js")
 
-var mlog = require("mlog.js")
 
+module.exports.f_static_write_log = f_write_log
 
-module.exports.f_static_init = (m_log=null) => {
-    try {
-        if (m_log != null) {
-            mlog = m_log
-        }
-        f_info("init wx_file...")
-        f_info("user dir is", USER_DIR)
-    } catch (e) {
-        f_err(e)
-    }
-}
 module.exports.f_static_mkdir = f_mkdir
 module.exports.f_static_unzip_sync = f_unzip_sync
 module.exports.f_static_downUrlFileSync = downUrlFileSync
@@ -24,16 +15,15 @@ module.exports.f_static_copyDir = copyDir
 module.exports.f_static_rmpath = f_remove_path
 
 module.exports.f_static_writeFile = writeFile
-module.exports.f_static_writeLog = writeLog
 
-module.exports.f_static_get_user_dir = (dir="") => {
-    return USER_DIR + "/"+dir+(dir.endsWith("/")?"":"/")
+module.exports.f_static_get_user_dir = (dir = "") => {
+    return USER_DIR + "/" + dir + (dir.endsWith("/") ? "" : "/")
 }
 module.exports.f_static_readdir = f_readdir
 module.exports.f_static_readfile = f_readfile
 module.exports.f_static_get_stat = f_get_stat
 module.exports.f_static_is_exist = f_is_exist
-module.exports.f_static_isDir = isDir
+module.exports.f_static_f_is_dir = f_is_dir
 
 
 /**
@@ -43,56 +33,110 @@ module.exports.f_static_isDir = isDir
  * @param i3
  * @param i4
  */
-function f_info(i1, i2, i3, i4) {
-    try {
-        if (mlog.f_info != null) {
-            mlog.f_info("wx_file", i1, i2, i3, i4)
-        } else {
-            console.info("wx_file", i1, i2, i3, i4)
-            mlog.f_wx_static_show_toast("wx_file:" + mlog.f_static_get_msg(i1, i2, i3, i4))
-        }
-    } catch (e) {
-        console.error("wx_file", e)
-        mlog.f_wx_static_show_modal("wx_file:" + mlog.f_static_get_msg(e))
-    }
-}
+const f_info = (i1, i2, i3, i4) => MODULE_MLOG.f_info(i1, i2, i3, i4)
 
-function f_err(e1, e2, e3, e4) {
-    try {
-        if (mlog.f_err != null) {
-            mlog.f_err("wx_file", e1, e2, e3, e4)
-        } else {
-            console.error("wx_file", e1, e2, e3, e4)
-            mlog.f_wx_static_show_modal("wx_file:" + mlog.f_static_get_msg(e1, e2, e3, e4))
-        }
-    } catch (e) {
-        console.error("wx_file", e)
-        mlog.f_wx_static_show_modal("wx_file:" + mlog.f_static_get_msg(e))
-    }
-}
+/**
+ * 
+ * @param {*} e1 
+ * @param {*} e2 
+ * @param {*} e3 
+ * @param {*} e4 
+ * @returns 
+ */
+const f_err = (e1, e2, e3, e4) => MODULE_MLOG.f_err(e1, e2, e3, e4)
 
-
-function f_mkdir(dirPath) {
+/**
+ * 
+ * @param {*} line_str 
+ */
+function f_write_log(line_str) {
     try {
-        dirPath = checkAbsolutePath(dirPath)
-        const dinfo = f_get_stat(dirPath)
-        if (dinfo != null) {
-            if (dinfo.isFile()) {
-                f_err("file already exists")
-                return false
+        //check path
+        const tdate = new Date().toJSON()
+        const log_path = f_to_absolute_path("MODULE_MLOG/" + tdate.split("T")[0] + ".MODULE_MLOG")
+        //parent path
+        const parent_path = log_path.substr(0, log_path.lastIndexOf("/"))
+        if (f_is_dir(parent_path) || f_mkdir(parent_path)) {
+            const msg = tdate + " " + line_str
+            if (f_is_exist(log_path)) {
+                FSM.appendFileSync(log_path, msg, "utf-8")
             } else {
-                f_info("dir already exists")
-                return true
+                FSM.writeFileSync(log_path, msg, "utf-8")
             }
-        } else {
-            const code = FSM.mkdirSync(dirPath, true) == null
-            f_info("mkdir", dirPath, code)
-            return code
         }
     } catch (e) {
-        f_err("mkdir is err", e)
+        console.error(e)
+        MODULE_MLOG.f_static_show_modal(MODULE_MLOG.f_static_get_msg(e))
     }
 }
+/**
+ * 
+ * @param {*} path
+ * @returns 
+ */
+const f_to_absolute_path = (path) => (path.startsWith(USER_DIR) ? "" : USER_DIR + "/") + path
+/**
+ * 
+ * @param {*} path 
+ * @returns 
+ */
+const f_is_exist = (path) => {
+    try{
+        return FSM.accessSync(path) == null
+    }catch(e){
+        //垃圾api如果文件不存在则会报错，所以必须用try包着
+        if (e.message.indexOf("no such file or directory")==-1) {
+            f_err(e)
+        }
+        return false
+    }
+}
+/**
+ * 
+ * @param {*} path 
+ * @returns 
+ */
+const f_mkdir = (path) => FSM.mkdirSync(path, true) == null
+
+/**
+ * 
+ * @param {*} path 
+ * @returns 
+ */
+const f_is_dir=(path) =>{
+    try{
+        const file_stat=f_get_stat(path)
+        return file_stat!=null&&file_stat.isDirectory()
+    }catch(e){
+        f_err(e)
+        return false
+    }
+}
+/**
+ *
+ * @param path
+ * @returns {void|*} Stats:
+ * .mode:
+ * .size:
+ * .lastAccessedTime:
+ * .lastModifiedTime:
+ * .isDirectory() 判断当前文件是否一个目录
+ * .isFile() 判断当前文件是否一个文件
+ */
+ const f_get_stat=(path)=>{
+     try{
+         if(f_is_exist(path)){
+             return FSM.statSync(f_to_absolute_path(path), false)
+         }else return null
+     }catch(e){
+         f_err(e)
+         return null
+     }
+ }
+
+
+
+
 
 function f_unzip_sync(zipPath, dstPath, callback) {
     const mcallback = (code) => {
@@ -101,7 +145,7 @@ function f_unzip_sync(zipPath, dstPath, callback) {
         }
     }
     try {
-        zipPath = checkAbsolutePath(zipPath)
+        zipPath = f_to_absolute_path(zipPath)
         dstPath = checkWritPath(dstPath)
         //check dst path
         if (false == dstPath.endsWith("/")) {
@@ -144,9 +188,9 @@ function f_unzip_sync(zipPath, dstPath, callback) {
  */
 function f_readdir(dirPath) {
     try {
-        dirPath = checkAbsolutePath(dirPath)
+        dirPath = f_to_absolute_path(dirPath)
         f_info("read dir", dirPath)
-        return isDir(dirPath) ? FSM.readdirSync(dirPath) : []//[p1,p2]
+        return f_is_dir(dirPath) ? FSM.readdirSync(dirPath) : []//[p1,p2]
     } catch (e) {
         f_err("read dir is err", e)
         return []
@@ -161,7 +205,7 @@ function f_readdir(dirPath) {
  */
 function f_readfile(filePath, encoding) {
     try {
-        filePath = checkAbsolutePath(filePath)
+        filePath = f_to_absolute_path(filePath)
         f_info("read file", filePath)
         return FSM.readFileSync(filePath, encoding != null ? encoding : "UTF-8")
     } catch (e) {
@@ -198,76 +242,17 @@ function writeFile(filePath, conter, isAppend, encoding) {
     }
 }
 
-function writeLog(title, body) {
-    try {
-        const tdate = new Date().toJSON()
-        const filePath = checkAbsolutePath("mlog/" + tdate.split("T")[0] + ".mlog", true)
-        //check parent path
-        const ppath = filePath.substr(0, filePath.lastIndexOf("/"))
-        if (!isDir(ppath)) {
-            FSM.mkdirSync(ppath, true)
-        }
 
-        const logmsg = tdate + " " + title + ":\r\n" + body + "\r\n"
-        if (f_is_exist(filePath, true)) {
-            FSM.appendFileSync(filePath, logmsg, "utf-8")
-        } else {
-            FSM.writeFileSync(filePath, logmsg, "utf-8")
-        }
-    } catch (e) {
-        console.error(e)
-        mlog.f_wx_static_show_modal(mlog.f_static_get_msg(e))
-    }
-}
 
-/**
- *
- * @param path
- * @returns {void|*} Stats:
- * .mode:
- * .size:
- * .lastAccessedTime:
- * .lastModifiedTime:
- * .isDirectory() 判断当前文件是否一个目录
- * .isFile() 判断当前文件是否一个文件
- */
-function f_get_stat(path) {
-    try{
-        return FSM.statSync(checkAbsolutePath(path), false)
-    }catch (e){
-        f_err(e)
-        return null
-    }
-}
 
-function f_is_exist(path) {
-    try {
-        path = checkAbsolutePath(path)
-        return typeof path == "string" && FSM.accessSync(path) == null
-    } catch (e) {
-        if (e.message.indexOf("no such file or directory") >= 0) {
-            f_info(path, e.message)
-        } else {
-            f_err(e)
-        }
-        return false
-    }
-}
 
-function isDir(path) {
-    try {
-        path = checkAbsolutePath(path)
-        const pinfo = f_get_stat(path)
-        return pinfo != null && pinfo.isDirectory()
-    } catch (e) {
-        f_err("check is dir err", e)
-        return false
-    }
-}
+
+
+
 
 function f_remove_path(path) {
     try {
-        path = checkAbsolutePath(path)
+        path = f_to_absolute_path(path)
         const pinfo = f_get_stat(path)
         if (pinfo != null) {
             if (pinfo.isDirectory()) {
@@ -291,7 +276,7 @@ function f_remove_path(path) {
 
 function copyFile(srcFPath, dstFPath) {
     try {
-        srcFPath = checkAbsolutePath(srcFPath)
+        srcFPath = f_to_absolute_path(srcFPath)
         const srcFileInfo = f_get_stat(srcFPath)
         //check src file is find
         if (srcFileInfo != null && srcFileInfo.isFile()) {
@@ -329,7 +314,7 @@ function copyFile(srcFPath, dstFPath) {
  */
 function copyDir(srcPath, dstPath, upProgressEvent) {
     try {
-        srcPath = checkAbsolutePath(srcPath)
+        srcPath = f_to_absolute_path(srcPath)
         dstPath = checkWritPath(dstPath)
         // check dst path
         if (!dstPath.endsWith("/")) {
@@ -338,7 +323,7 @@ function copyDir(srcPath, dstPath, upProgressEvent) {
         //check is exist
         if (f_is_exist(srcPath)) {
             //check is dir
-            if (isDir(srcPath)) {
+            if (f_is_dir(srcPath)) {
                 // check src path
                 if (!srcPath.endsWith("/")) {
                     srcPath += "/"
@@ -412,10 +397,10 @@ function checkWritPath(path) {
     try {
         if (typeof path == "string") {
             //check is absolute path
-            path = checkAbsolutePath(path)
+            path = f_to_absolute_path(path)
             //check parent path
             const ppath = path.substr(0, path.lastIndexOf("/"))
-            if (isDir(ppath) == false) {
+            if (f_is_dir(ppath) == false) {
                 mkDir(ppath)
             }
             return path
@@ -426,6 +411,4 @@ function checkWritPath(path) {
     }
 }
 
-function checkAbsolutePath(path) {
-    return (path.startsWith(USER_DIR) ? "" : USER_DIR + "/") + path
-}
+

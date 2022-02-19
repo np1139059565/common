@@ -1,13 +1,14 @@
-const mfile = require("wx_file.js"),LOG_TYPES={
-    DEBUG:"DEBUG",
-    INFO:"INFO"
-},MLOG_TITLE="mlog"
+const MODULE_MFILE = require("wx_file.js"),
+      LOG_TYPES={
+        DEBUG:"DEBUG",
+        INFO:"INFO"
+      }
 
 var logType=LOG_TYPES.DEBUG
 
-module.exports.f_static_init = function (s_logType) {
+module.exports.f_static_init = function (s_logType=LOG_TYPES.DEBUG) {
     try {
-        f_info("init log...")
+        f_info("init module mlog...")
         switch (s_logType.toUpperCase()){
             case LOG_TYPES.DEBUG:
                 logType=LOG_TYPES.DEBUG;
@@ -17,39 +18,67 @@ module.exports.f_static_init = function (s_logType) {
                 break;
         }
         f_info("switch mlog type",logType)
+        
         module.exports.f_info = f_info
         module.exports.f_err = f_err
     } catch (e) {
         f_err(e)
     }
 }
+
 module.exports.f_static_get_msg=f_get_msg
+module.exports.f_static_show_toast=f_show_toast
+module.exports.f_static_show_modal=f_show_modal
+module.exports.f_static_show_sheet=f_show_sheet
 
-module.exports.f_wx_static_show_toast=f_wx_show_toast
-module.exports.f_wx_static_show_modal=f_wx_show_modal
-module.exports.f_wx_static_show_sheet=f_wx_show_sheet
-
-function f_info(title=null, i2, i3, i4, i5) {
-    if(title==null){
-        title=MLOG_TITLE
+/**
+ * 
+ * @param {*} title 
+ * @param {*} e2 
+ * @param {*} e3 
+ * @param {*} e4 
+ * @param {*} e5 
+ * @returns 
+ */
+ const f_err=(e2, e3, e4, e5) =>f_info(e2,e3,e4,e5,"error")
+ /**
+ * 
+ * @param {*} title 
+ * @param {*} i2 
+ * @param {*} i3 
+ * @param {*} i4 
+ * @param {*} i5 
+ */
+function f_info(i2, i3, i4, i5,title="info") {
+    try{
+        const msg=f_get_msg(i2, i3, i4, i5)
+        
+        console.info(title, msg)
+        MODULE_MFILE.f_static_write_log(title + ":\r\n" + msg + "\r\n")
+        if(logType==LOG_TYPES.DEBUG){
+            f_show_toast(title+msg)
+        }
+    }catch(e){
+        f_err(e)
     }
-    mfile.f_static_writeLog(title, f_get_msg(i2, i3, i4, i5))
-    if(logType==LOG_TYPES.DEBUG){
-        f_wx_show_toast(title+f_get_msg( i2, i3, i4, i5))
-    }
-    console.info(title, f_get_msg(i1, i2, i3, i4, i5))
 }
-
-function f_err(title, e2, e3, e4, e5) {
-    if(title==null){
-        title=MLOG_TITLE
-    }
-    mfile.f_static_writeLog(title, f_get_msg(e1, e2, e3, e4, e5))
-    f_wx_show_modal(title+f_get_msg( e2, e3, e4, e5))
-    console.error(title, f_get_msg(e1, e2, e3, e4, e5))
-}
-
-function f_tostr(e) {
+/**
+ * 
+ * @param {*} e1 
+ * @param {*} e2 
+ * @param {*} e3 
+ * @param {*} e4 
+ * @param {*} e5 
+ * @returns 
+ */
+ const f_get_msg=(e1, e2, e3, e4, e5) =>(f_err_to_str(e1) + "," + f_err_to_str(e2) + "," + f_err_to_str(e3) 
+ + "," + f_err_to_str(e4) + "," + f_err_to_str(e5)).replaceAll(/,,/g, ",")
+/**
+ * 
+ * @param {*} e 
+ * @returns 
+ */
+ function f_err_to_str(e) {
     try {
         if (e == null) {
             return ""
@@ -61,117 +90,92 @@ function f_tostr(e) {
             return e
         }
     } catch (e1) {
-        console.error("getMsg is err", e1)
+        f_err(e1)
     }
 }
 
-function f_get_msg(e1, e2, e3, e4, e5) {
-    return (f_tostr(e1) + "," + f_tostr(e2) + "," + f_tostr(e3) + "," + f_tostr(e4) + "," + f_tostr(e5)).replaceAll(/,,/g, ",")
-}
 
-function f_wx_show_toast(title, icon, duration) {
-    wx.showToast({
-        title: title,
-        icon: icon != null ? icon : "loading",
-        duration: duration > 0 ? duration : 2000
-    })
-}
+/**
+ * 
+ * @param {*} options 
+ * 	属性	类型	默认值	必填	说明	最低版本
+ *  title	string		是	提示的内容	
+ *  icon	string	success	否	图标	
+ *      合法值	说明
+ *      success	显示成功图标，此时 title 文本最多显示 7 个汉字长度
+ *      error	显示失败图标，此时 title 文本最多显示 7 个汉字长度
+ *      loading	显示加载图标，此时 title 文本最多显示 7 个汉字长度
+ *      none	不显示图标，此时 title 文本最多可显示两行，1.9.0及以上版本支持
+ *  image	string		否	自定义图标的本地路径，image 的优先级高于 icon	1.1.0
+ *  duration	number	1500	否	提示的延迟时间
+ *  mask	boolean	false	否	是否显示透明蒙层，防止触摸穿透
+ *  success	function		否	接口调用成功的回调函数
+ *  fail	function		否	接口调用失败的回调函数
+ *  complete	function		否	接口调用结束的回调函数（调用成功、失败都会执行）
+ * @returns 
+ */
+const f_show_toast=(options)=>wx.showToast(options)
 
-function f_wx_show_modal( content, ocallback, ccallback) {
+/**
+ * 
+ * @param {*} options
+ *  属性	类型	默认值	必填	说明	最低版本
+ *  title	string		否	提示的标题	
+ *  content	string		否	提示的内容	
+ *  showCancel	boolean	true	否	是否显示取消按钮	
+ *  cancelText	string	取消	否	取消按钮的文字，最多 4 个字符	
+ *  cancelColor	string	#000000	否	取消按钮的文字颜色，必须是 16 进制格式的颜色字符串	
+ *  confirmText	string	确定	否	确认按钮的文字，最多 4 个字符	
+ *  confirmColor	string	#576B95	否	确认按钮的文字颜色，必须是 16 进制格式的颜色字符串	
+ *  editable	boolean	false	否	是否显示输入框	2.17.1
+ *  placeholderText	string		否	显示输入框时的提示文本	2.17.1
+ *  success	function		否	接口调用成功的回调函数	
+ *  fail	function		否	接口调用失败的回调函数	
+ *  complete	function		否	接口调用结束的回调函数（调用成功、失败都会执行）	
+ * @returns 
+ */
+const f_show_modal=(options)=>wx.showModal(options)
+
+/**
+ * 
+ * @param {*} options
+ 属性	类型	默认值	必填	说明	最低版本
+alertText	string		否	警示文案	2.14.0
+itemList	Array.<string>		是	按钮的文字数组，数组长度最大为 6	
+itemColor	string	#000000	否	按钮的文字颜色	
+success	function		否	接口调用成功的回调函数	
+fail	function		否	接口调用失败的回调函数	
+complete	function		否	接口调用结束的回调函数（调用成功、失败都会执行）	
+ 
+ */
+function f_show_sheet(options) {
     try{
-        //ok,cancel
-        wx.showModal({
-            content: content,
-            showCancel: typeof ccallback == "function",
-            confirmText: "确认",
-            cancelText: "取消",
-            success: (res) => {
-                try {
-                    if (res.confirm) {
-                        if (typeof ocallback == "function") {
-                            ocallback()
-                        }
-                    } else if (res.cancel) {
-                        if (typeof ccallback == "function") {
-                            ccallback()
-                        }
-                    }
-                } catch (e) {
-                    err(e)
-                }
-            },
-            fail:(res,a,b)=>{
-                try{
-                    f_wx_show_toast(res.errMsg)
-                }catch (e){
-                    err(e)
-                }
-            }
-        })
-    }catch (e){
-        err(e)
-    }
-}
+        const MAX_LENGTH=6
+        const LAST_PAGE="下一页"
 
-function f_wx_show_sheet(item_arr, selectedCallback, cancelcallback) {
-    const MyShowActionSheet = function (config) {
-        if (config.itemList.length > 6) {
-            var myConfig = {};
-            for (var i in config) { //for in 会遍历对象的属性，包括实例中和原型中的属性。（需要可访问，可枚举属性）
-                myConfig[i] = config[i];
-            }
-            myConfig.page = 1;
-            myConfig.itemListBak = config.itemList;
-            myConfig.itemList = [];
-            var completeFun = config.complete;
-            myConfig.complete = function (res) {
-                if (res.tapIndex == 5) {//下一页
-                    myConfig.page++;
-                    MyShowActionSheet(myConfig);
-                } else {
-                    res.tapIndex = res.tapIndex + 5 * (myConfig.page-1);
-                    completeFun(res);
+        if(options.itemList.length>MAX_LENGTH||options.itemList[MAX_LENGTH-1]==LAST_PAGE){
+            if(options.itemListBak==null){
+                options.itemListBak=options.itemList
+                options.itemPage=1
+                options.success=(r)=>{
+                    try{
+                        if(options.itemList[r.tapIndex]==LAST_PAGE){
+                            options.itemPage+=1
+                            f_show_sheet(options)
+                        }else{
+                            options.successBak(r)
+                        }
+                    }catch(e){
+                        f_err(e)
+                    }
                 }
             }
-            MyShowActionSheet(myConfig);
-            return ;
+            options.itemList=options.itemListBak.filter((v,i)=>i<(options.itemPage*MAX_LENGTH))
+            .map((v,i)=>(i+1==MAX_LENGTH)?LAST_PAGE:v)
         }
-        if (!config.page) {
-            wx.showActionSheet(config);
-        }else{
-            var page = config.page;
-            var itemListBak = config.itemListBak;
-            var itemList = [];
-            for (var i = 5 * (page - 1); i < 5 * page && i < itemListBak.length; i++) {
-                itemList.push(itemListBak[i]);
-            }
-            if (5 * page < itemListBak.length) {
-                itemList.push('下一页');
-            }
-            config.itemList = itemList;
-            wx.showActionSheet(config);
-        }
+
+        wx.showActionSheet(options)
+    }catch(e){
+        f_err(e)
     }
-    MyShowActionSheet({
-        itemList: item_arr,//['A', 'B', 'C'],长度不能超过6,必须是字符串数组
-        complete: (res) => {
-            try {
-                if (res.errMsg.endsWith(":ok")) {
-                    this.data.mlog.info("selected", item_arr[res.tapIndex])
-                    if (typeof selectedCallback == "function") {
-                        selectedCallback(item_arr[res.tapIndex], res.tapIndex)
-                    }
-                } else {
-                    if (typeof cancelcallback == "function") {
-                        // this.data.mlog.info("not selected.")
-                        cancelcallback()
-                    }else{
-                        // this.data.mlog.err("not selected.")
-                    }
-                }
-            } catch (e) {
-                this.data.mlog.err(e)
-            }
-        }
-    })
 }

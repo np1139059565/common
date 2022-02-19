@@ -15,25 +15,25 @@ function info(i1,i2,i3,i4) {
     try {
         if (mlog.info == null) {
             console.info("myun",i1,i2,i3,i4)
-            mlog.f_wx_static_show_toast("myun:"+mlog.f_static_get_msg(i1,i2,i3,i4))
+            mlog.f_static_show_toast("myun:"+mlog.f_static_get_msg(i1,i2,i3,i4))
         } else {
             mlog.info("myun", i1, i2, i3, i4)
         }
     } catch (e) {
         console.error("myun",e)
-        mlog.f_wx_static_show_modal("myun:"+mlog.f_static_get_msg(e))
+        mlog.f_static_show_modal("myun:"+mlog.f_static_get_msg(e))
     }
 }
 
 function err(e1, e2, e3,e4) {
     try {
-        if (mlog.err == null) {
+        if (mlog.f_err == null) {
             console.error("myun",e1, e2, e3,e4)
-            mlog.f_wx_static_show_modal("myun:"+mlog.f_static_get_msg(e1, e2, e3,e4))
-        } else mlog.err("myun", e1,e2,e3,e4)
+            mlog.f_static_show_modal("myun:"+mlog.f_static_get_msg(e1, e2, e3,e4))
+        } else mlog.f_err("myun", e1,e2,e3,e4)
     } catch (e) {
         console.error("myun",e)
-        mlog.f_wx_static_show_modal("myun:"+mlog.f_static_get_msg(e))
+        mlog.f_static_show_modal("myun:"+mlog.f_static_get_msg(e))
     }
 }
 
