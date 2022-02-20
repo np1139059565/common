@@ -94,7 +94,7 @@ function f_info(i2, i3, i4, i5,info_type=INFO_TYPES.INFO) {
  *  complete	function		否	接口调用结束的回调函数（调用成功、失败都会执行）
  * @returns 
  */
-const f_show_toast=(options)=>wx.showToast(options)
+const f_show_toast=(title,options={})=>wx.showToast(Object.assign({title:title,icon:"error"},options))
 
 /**
  * 
