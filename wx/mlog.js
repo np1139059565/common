@@ -4,8 +4,8 @@ const MODULE_MFILE = require("wx_file.js"),
         INFO:"INFO"
       },
       INFO_TYPES={
-          ERROR="ERROR",
-          INIFO="INFO"
+          ERROR:"ERROR",
+          INIFO:"INFO"
       }
 
 var logType=LOG_TYPES.DEBUG
