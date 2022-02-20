@@ -4,28 +4,6 @@ const USER_DIR = wx.env.USER_DATA_PATH,
     MODULE_MLOG = require("mlog.js")
 
 
-module.exports.f_static_write_log = f_write_log
-
-module.exports.f_static_mkdir = f_mkdir
-module.exports.f_static_unzip_sync = f_unzip_sync
-module.exports.f_static_downUrlFileSync = downUrlFileSync
-module.exports.f_static_copyFile = copyFile
-module.exports.f_static_copyDir = copyDir
-
-module.exports.f_static_rmpath = f_remove_path
-
-module.exports.f_static_writeFile = writeFile
-
-module.exports.f_static_get_user_dir = (dir = "") => {
-    return USER_DIR + "/" + dir + (dir.endsWith("/") ? "" : "/")
-}
-module.exports.f_static_readdir = f_readdir
-module.exports.f_static_readfile = f_readfile
-module.exports.f_static_get_stat = f_get_stat
-module.exports.f_static_is_exist = f_is_exist
-module.exports.f_static_f_is_dir = f_is_dir
-
-
 /**
  *
  * @param i1
@@ -33,7 +11,7 @@ module.exports.f_static_f_is_dir = f_is_dir
  * @param i3
  * @param i4
  */
-const f_info = (i1, i2, i3, i4) => MODULE_MLOG.f_info(i1, i2, i3, i4)
+const f_info = (i1, i2, i3, i4) => MODULE_MLOG.f_static_info(i1, i2, i3, i4)
 
 /**
  * 
@@ -43,7 +21,7 @@ const f_info = (i1, i2, i3, i4) => MODULE_MLOG.f_info(i1, i2, i3, i4)
  * @param {*} e4 
  * @returns 
  */
-const f_err = (e1, e2, e3, e4) => MODULE_MLOG.f_err(e1, e2, e3, e4)
+const f_err = (e1, e2, e3, e4) => MODULE_MLOG.f_static_err(e1, e2, e3, e4)
 
 /**
  * 
@@ -52,12 +30,12 @@ const f_err = (e1, e2, e3, e4) => MODULE_MLOG.f_err(e1, e2, e3, e4)
 function f_write_log(line_str) {
     try {
         //check path
-        const tdate = new Date().toJSON()
-        const log_path = f_to_absolute_path("MODULE_MLOG/" + tdate.split("T")[0] + ".MODULE_MLOG")
+        const time_str = new Date().toJSON()
+        const log_path = f_to_absolute_path("MODULE_MLOG/" + time_str.split("T")[0] + ".MODULE_MLOG")
         //parent path
         const parent_path = log_path.substr(0, log_path.lastIndexOf("/"))
         if (f_is_dir(parent_path) || f_mkdir(parent_path)) {
-            const msg = tdate + " " + line_str
+            const msg = time_str + " " + line_str
             if (f_is_exist(log_path)) {
                 FSM.appendFileSync(log_path, msg, "utf-8")
             } else {
@@ -74,7 +52,7 @@ function f_write_log(line_str) {
  * @param {*} path
  * @returns 
  */
-const f_to_absolute_path = (path) => (path.startsWith(USER_DIR) ? "" : USER_DIR + "/") + path
+const f_to_absolute_path = (path="") => (path.startsWith(USER_DIR)||path.startsWith("/") ? "" : (USER_DIR + "/")) + path
 /**
  * 
  * @param {*} path 
@@ -104,13 +82,8 @@ const f_mkdir = (path) => FSM.mkdirSync(path, true) == null
  * @returns 
  */
 const f_is_dir=(path) =>{
-    try{
-        const file_stat=f_get_stat(path)
-        return file_stat!=null&&file_stat.isDirectory()
-    }catch(e){
-        f_err(e)
-        return false
-    }
+    const file_stat=f_get_stat(path)
+    return file_stat!=null&&file_stat.isDirectory()
 }
 /**
  *
@@ -124,14 +97,9 @@ const f_is_dir=(path) =>{
  * .isFile() 判断当前文件是否一个文件
  */
  const f_get_stat=(path)=>{
-     try{
-         if(f_is_exist(path)){
-             return FSM.statSync(f_to_absolute_path(path), false)
-         }else return null
-     }catch(e){
-         f_err(e)
-         return null
-     }
+    if(f_is_exist(path)){
+        return FSM.statSync(f_to_absolute_path(path), false)
+    }else return null
  }
 
 
@@ -412,3 +380,22 @@ function checkWritPath(path) {
 }
 
 
+
+
+module.exports.f_static_write_log = f_write_log
+module.exports.f_static_write_file = writeFile
+module.exports.f_static_mkdir = f_mkdir
+module.exports.f_static_downUrlFileSync = downUrlFileSync
+
+module.exports.f_static_rmpath = f_remove_path
+
+module.exports.f_static_unzip_sync = f_unzip_sync
+module.exports.f_static_copyFile = copyFile
+module.exports.f_static_copyDir = copyDir
+
+module.exports.f_static_get_absolute_path = f_to_absolute_path
+module.exports.f_static_readdir = f_readdir
+module.exports.f_static_readfile = f_readfile
+module.exports.f_static_getstat = f_get_stat
+module.exports.f_static_isexist = f_is_exist
+module.exports.f_static_f_isdir = f_is_dir
