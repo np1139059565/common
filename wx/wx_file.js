@@ -1,52 +1,48 @@
 //wxfile://usr
 const USER_DIR = wx.env.USER_DATA_PATH,
     FSM = wx.getFileSystemManager(),
-    MODULE_MLOG = require("mlog.js")
-
-
-/**
- *
- * @param i1
- * @param i2
- * @param i3
- * @param i4
- */
-const f_info = (i1, i2, i3, i4) => MODULE_MLOG.f_static_info(i1, i2, i3, i4)
+    MODULE_MLOG = require("mlog.js"),
+    f_err=MODULE_MLOG.f_static_err,
+    f_info=MODULE_MLOG.f_static_info
 
 /**
  * 
- * @param {*} e1 
- * @param {*} e2 
- * @param {*} e3 
- * @param {*} e4 
+ * 类型 属性		默认值	必填	说明
+ * @param {string} file_path 是	要追加内容的文件路径 (本地路径)
+ * @param {string/ArrayBuffer} data 是	要追加的文本或二进制数据
+ * @param {*} is_add false
+ * @param {string} encoding utf8	否	指定写入文件的字符编码
+ * 合法值	说明
+ * ascii	
+ * base64	
+ * binary	
+ * hex	
+ * ucs2	以小端序读取
+ * ucs-2	以小端序读取
+ * utf16le	以小端序读取
+ * utf-16le	以小端序读取
+ * utf-8	
+ * utf8	
+ * latin1	
+ * success	function		否	接口调用成功的回调函数
+ * fail	function		否	接口调用失败的回调函数
+ * complete	function		否	接口调用结束的回调函数（调用成功、失败都会执行）
  * @returns 
  */
-const f_err = (e1, e2, e3, e4) => MODULE_MLOG.f_static_err(e1, e2, e3, e4)
-
-/**
- * 
- * @param {*} line_str 
- */
-function f_write_log(line_str) {
-    try {
-        //check path
-        const time_str = new Date().toJSON()
-        const log_path = f_to_absolute_path("MODULE_MLOG/" + time_str.split("T")[0] + ".MODULE_MLOG")
-        //parent path
-        const parent_path = log_path.substr(0, log_path.lastIndexOf("/"))
-        if (f_is_dir(parent_path) || f_mkdir(parent_path)) {
-            const msg = time_str + " " + line_str
-            if (f_is_exist(log_path)) {
-                FSM.appendFileSync(log_path, msg, "utf-8")
-            } else {
-                FSM.writeFileSync(log_path, msg, "utf-8")
-            }
+ const f_writefile=(file_path, data, is_add=false, encoding="utf8",is_log=false)=>{
+    //check parent path
+    const parent_path = log_path.substr(0, log_path.lastIndexOf("/"))
+    if (f_is_dir(parent_path) || f_mkdir(parent_path)) {
+        //log...
+        if(!is_log){
+            f_info("write file",file_path,is_add,encoding,data.length)
         }
-    } catch (e) {
-        console.error(e)
-        MODULE_MLOG.f_static_show_modal(MODULE_MLOG.f_static_get_msg(e))
-    }
+        FSM[f_is_exist(file_path)&&is_add?"appendFileSync":"writeFileSync"](file_path,data,encoding)
+    }else throw new TypeError("check parent path is err!")
 }
+
+
+
 /**
  * 
  * @param {*} path
@@ -114,7 +110,6 @@ function f_unzip_sync(zipPath, dstPath, callback) {
     }
     try {
         zipPath = f_to_absolute_path(zipPath)
-        dstPath = checkWritPath(dstPath)
         //check dst path
         if (false == dstPath.endsWith("/")) {
             dstPath += "/"
@@ -182,34 +177,6 @@ function f_readfile(filePath, encoding) {
     }
 }
 
-/**
- *
- * @param filePath
- * @param conter
- * @param isAppend false
- * @param encoding utf-8
- * @returns {boolean}
- */
-function writeFile(filePath, conter, isAppend, encoding) {
-    try {
-        //init path
-        filePath = checkWritPath(filePath)
-        //encode
-        encoding = (encoding != null ? encoding : "utf8")
-        //append
-        const code = (isAppend && f_is_exist(filePath) ? FSM.appendFileSync(filePath, conter, encoding) == null
-            //cover
-            : FSM.writeFileSync(filePath, conter, encoding) == null)
-
-        f_info((isAppend ? "append" : "write") + " " + filePath, encoding, code)
-
-        return code
-    } catch (e) {
-        f_err("write file is err", e)
-        return false
-    }
-}
-
 
 
 
@@ -252,7 +219,6 @@ function copyFile(srcFPath, dstFPath) {
                 dstFPath = dstFPath.substr(0, dstFPath.length - 1)
             }
             //check dst path
-            dstFPath = checkWritPath(dstFPath)
             const dstFileInfo = f_get_stat(dstFPath)
             if (dstFileInfo != null && dstFileInfo.isDirectory()) {
                 f_err("dst path is dir", dstFPath)
@@ -283,7 +249,6 @@ function copyFile(srcFPath, dstFPath) {
 function copyDir(srcPath, dstPath, upProgressEvent) {
     try {
         srcPath = f_to_absolute_path(srcPath)
-        dstPath = checkWritPath(dstPath)
         // check dst path
         if (!dstPath.endsWith("/")) {
             dstPath += "/"
@@ -344,7 +309,6 @@ function downUrlFileSync(url, localPath, callback) {
                 const code = res.statusCode === 200
                 if (code) {
                     //copy cache to local
-                    localPath = checkWritPath(localPath)
                     f_info("download url file is " + code, url, res)
                     mcallback(copyFile(res.tempFilePath, localPath))
                 } else {
@@ -360,30 +324,7 @@ function downUrlFileSync(url, localPath, callback) {
 }
 
 
-
-function checkWritPath(path) {
-    try {
-        if (typeof path == "string") {
-            //check is absolute path
-            path = f_to_absolute_path(path)
-            //check parent path
-            const ppath = path.substr(0, path.lastIndexOf("/"))
-            if (f_is_dir(ppath) == false) {
-                mkDir(ppath)
-            }
-            return path
-        } else return null
-    } catch (e) {
-        f_err(e)
-        return null
-    }
-}
-
-
-
-
-module.exports.f_static_write_log = f_write_log
-module.exports.f_static_write_file = writeFile
+module.exports.f_static_writefile = f_writefile
 module.exports.f_static_mkdir = f_mkdir
 module.exports.f_static_downUrlFileSync = downUrlFileSync
 

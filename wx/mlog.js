@@ -13,26 +13,18 @@ var log_type = LOG_TYPES.DEBUG
 
 /**
  * 
- * @param {*} title 
- * @param {*} e2 
- * @param {*} e3 
- * @param {*} e4 
- * @param {*} e5 
+ * @param  {...any} args 
  * @returns 
  */
-const f_err = (e2, e3, e4, e5) => f_info(e2, e3, e4, e5, INFO_TYPES.ERROR)
+const f_err = (...args) => f_info(args.concat(INFO_TYPES.ERROR))
 /**
-* 
-* @param {*} info_type 
-* @param {*} i2 
-* @param {*} i3 
-* @param {*} i4 
-* @param {*} i5 
-*/
-function f_info(i2, i3, i4, i5, info_type = INFO_TYPES.INFO) {
+ * 
+ * @param  {...any} args 
+ */
+function f_info(...args) {
     try {
-        const msg = f_get_msg(i2, i3, i4, i5)
-
+        const info_type = INFO_TYPES[args[args.length-1]]!=null?args.pop():INFO_TYPES.INFO
+        const msg = args.map(o=>f_obj_to_str(o)).join(",").replaceAll(/,,/g,",")
         //check is log type
         if (log_type == LOG_TYPES.DEBUG) {
             //write to conctol
@@ -40,44 +32,14 @@ function f_info(i2, i3, i4, i5, info_type = INFO_TYPES.INFO) {
         } else {
             f_show_toast(msg)
             //write to log file
-            MODULE_MFILE.f_static_write_log(info_type + ":\r\n" + msg + "\r\n")
+            const time_str = new Date().toJSON()
+            const log_path = MODULE_MFILE.f_static_get_absolute_path("MODULE_MLOG/" + time_str.split("T")[0] + ".MODULE_MLOG")    
+            MODULE_MFILE.f_static_writefile(log_path,time_str+" "+info_type + ":\r\n" + msg + "\r\n",true,"utf8",false)
         }
     } catch (e) {
-        f_err(e)
+        f_show_loading(f_obj_to_str(e))
     }
 }
-/**
- * 
- * @param {*} e1 
- * @param {*} e2 
- * @param {*} e3 
- * @param {*} e4 
- * @param {*} e5 
- * @returns 
- */
-const f_get_msg = (e1, e2, e3, e4, e5) => (f_err_to_str(e1) + "," + f_err_to_str(e2) + "," + f_err_to_str(e3)
-    + "," + f_err_to_str(e4) + "," + f_err_to_str(e5)).replaceAll(/,,/g, ",")
-/**
- * 
- * @param {*} e 
- * @returns 
- */
-function f_err_to_str(e) {
-    try {
-        if (e == null) {
-            return ""
-        } else if (e instanceof TypeError || e.stack != null) {
-            return e.stack
-        } else if (e instanceof Error || e.errMsg != null || e.message != null) {//yun err
-            return e.errMsg || e.message
-        } else {
-            return e
-        }
-    } catch (e1) {
-        f_err(e1)
-    }
-}
-
 
 /**
  * 
@@ -134,7 +96,6 @@ complete	function		否	接口调用结束的回调函数（调用成功、失败
  
  */
 function f_show_sheet(options) {
-    try {
         //check itemList.length>6
         if (options.itemList.length > MAX_LENGTH || options.itemList[MAX_LENGTH - 1] == NEXT_OPTION) {
             const MAX_LENGTH = 6
@@ -152,7 +113,7 @@ function f_show_sheet(options) {
                             options.successCopy(r)
                         }
                     } catch (e) {
-                        f_err(e)
+                        f_show_loading(f_obj_to_str(e))
                     }
                 }
             }
@@ -160,12 +121,8 @@ function f_show_sheet(options) {
             options.itemList = options.itemListCopy.filter((v, i) => i < (options.page * MAX_LENGTH))
                 .map((v, i) => (i + 1 == MAX_LENGTH) ? NEXT_OPTION : v)
         }
-
         //show sheet
         wx.showActionSheet(options)
-    } catch (e) {
-        f_err(e)
-    }
 }
 
 /**
@@ -184,24 +141,19 @@ const f_show_loading=(title,options)=>wx.showLoading(Object.assign({title:title}
 
 
 module.exports.f_static_init = function (s_logType = LOG_TYPES.DEBUG) {
-    try {
-        switch (s_logType.toUpperCase()) {
-            case LOG_TYPES.DEBUG:
-                log_type = LOG_TYPES.DEBUG;
-                break;
-            default:
-                log_type = LOG_TYPES.INFO;
-                break;
-        }
-        f_info("init module mlog...")
-        f_info("switch mlog type", log_type)
-    } catch (e) {
-        f_err(e)
+    switch (s_logType.toUpperCase()) {
+        case LOG_TYPES.DEBUG:
+            log_type = LOG_TYPES.DEBUG;
+            break;
+        default:
+            log_type = LOG_TYPES.INFO;
+            break;
     }
+    f_info("init module mlog...")
+    f_info("switch mlog type", log_type)
 }
 module.exports.f_static_info = f_info
 module.exports.f_static_err = f_err
-module.exports.f_static_get_msg = f_get_msg
 module.exports.f_static_get_log_types = () => LOG_TYPES
 module.exports.f_static_show_toast = f_show_toast
 module.exports.f_static_show_modal = f_show_modal

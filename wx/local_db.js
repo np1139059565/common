@@ -1,38 +1,22 @@
 const MODULE_MLOG = require("mlog.js"),
     MODULE_MFILE = require("wx_file.js"),
     MODULE_MYUN = require("myun.js"),
-    LOCAL_TABLES = {}
+    LOCAL_TABLES = {},
+    f_err=MODULE_MLOG.f_static_err,
+    f_info=MODULE_MLOG.f_static_info
+
 
 var dbName = null
 
 
-/**
- *
- * @param i1
- * @param i2
- * @param i3
- * @param i4
- */
-const f_info = (i1, i2, i3, i4) => MODULE_MLOG.f_static_info(i1, i2, i3, i4)
-
-/**
- * 
- * @param {*} e1 
- * @param {*} e2 
- * @param {*} e3 
- * @param {*} e4 
- * @returns 
- */
-const f_err = (e1, e2, e3, e4) => MODULE_MLOG.f_static_err(e1, e2, e3, e4)
-
-function f_init_local_db(callback) {
+function f_refush_local_db(callback) {
+    f_info("refush local db...")
     f_query_wx_yun_db((code, r) => {
         if(code){
             r.map(tableInfo=>{
-                console.info(tableInfo,"111111111111")
-                // LOCAL_TABLES[]
-                //write local table
-                // MODULE_MFILE.f_static_write_file(dbName + "/" + tableName, JSON.stringify(r))
+                const tableName=tableInfo._id
+                LOCAL_TABLES[tableName]=tableName
+                MODULE_MFILE.f_static_writefile(MODULE_MFILE.f_static_get_absolute_path(dbName + "/" + tableName), JSON.stringify(r))
             })
         }
         if(typeof callback=="function"){
@@ -125,7 +109,7 @@ module.exports.f_static_init = (dbName1, callback) => {
             //refush local db
             if (false == MODULE_MFILE.f_static_f_isdir(MODULE_MFILE.f_static_get_absolute_path(dbName))) {
                 f_info("init local db..")
-                f_init_local_db(mcallback)
+                f_refush_local_db(mcallback)
             } else mcallback(true)
         } else {
             mcallback(false, "database name is null!")
