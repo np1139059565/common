@@ -92,8 +92,8 @@ const f_query_wx_yun_db=(callback,params=null) =>MODULE_MYUN.f_run_wx_yun_event(
 
 function f_check_local_tables(){
     const tables_path=MODULE_MFILE.f_static_get_absolute_path(db_name+LOCAL_TABLE_FILE)
-    return MODULE_MFILE.f_static_isexist(tables_path)&&(Object.assign(local_tables,JSON.parse(MODULE_MFILE.f_static_readfile(tables_path))))
-        .filter(tableName=>MODULE_MFILE.f_static_isexist(MODULE_MFILE.f_static_get_absolute_path(db_name+"/"+tableName))!=true).length==0
+    return MODULE_MFILE.f_static_isexist(tables_path)&&Object.values(Object.assign(local_tables,JSON.parse(MODULE_MFILE.f_static_readfile(tables_path))))
+        .filter(table_name=>MODULE_MFILE.f_static_isexist(MODULE_MFILE.f_static_get_absolute_path(db_name+"/"+table_name))!=true).length==0
 }
 
 module.exports.f_static_init = (dbName1, callback) => {
