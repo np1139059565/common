@@ -50,7 +50,7 @@ const f_info=(...args)=>MODULE_MLOG.f_static_info(args)
  * @param {*} path
  * @returns 
  */
-const f_to_absolute_path = (path="") => ((path.startsWith(USER_DIR)||path.startsWith("/") ? "" : (USER_DIR + "/")) + path).replace(/\/\//g,"/")
+const f_to_absolute_path = (path="") => ((path.startsWith(USER_DIR)||path.startsWith("/") ? "" : (USER_DIR + "/")) + path)//.replace(/\/\//g,"/")
 /**
  * 
  * @param {*} path 
