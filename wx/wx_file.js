@@ -31,7 +31,7 @@ const USER_DIR = wx.env.USER_DATA_PATH,
  */
  const f_writefile=(file_path, data, is_add=false, encoding="utf8",is_log=false)=>{
     //check parent path
-    const parent_path = log_path.substr(0, log_path.lastIndexOf("/"))
+    const parent_path = file_path.substr(0, file_path.lastIndexOf("/"))
     if (f_is_dir(parent_path) || f_mkdir(parent_path)) {
         //log...
         if(!is_log){
