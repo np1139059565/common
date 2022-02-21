@@ -1,10 +1,11 @@
 //wxfile://usr
 const USER_DIR = wx.env.USER_DATA_PATH,
     FSM = wx.getFileSystemManager(),
-    MODULE_MLOG = require("mlog.js"),
-    f_err=MODULE_MLOG.f_static_err,
-    f_info=MODULE_MLOG.f_static_info
+    MODULE_MLOG = require("mlog.js")
 
+
+const f_err=MODULE_MLOG.f_static_err
+const f_info=MODULE_MLOG.f_static_info
 /**
  * 
  * 类型 属性		默认值	必填	说明
