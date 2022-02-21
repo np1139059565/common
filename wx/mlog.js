@@ -1,14 +1,14 @@
 const MODULE_MFILE = require("wx_file.js"),
-      LOG_TYPES={
-        DEBUG:"DEBUG",
-        INFO:"INFO"
-      },
-      INFO_TYPES={
-          ERROR:"ERROR",
-          INFO:"INFO"
-      }
+    LOG_TYPES = {
+        DEBUG: "DEBUG",
+        INFO: "INFO"
+    },
+    INFO_TYPES = {
+        ERROR: "ERROR",
+        INFO: "INFO"
+    }
 
-var logType=LOG_TYPES.DEBUG
+var log_type = LOG_TYPES.DEBUG
 
 
 /**
@@ -20,25 +20,29 @@ var logType=LOG_TYPES.DEBUG
  * @param {*} e5 
  * @returns 
  */
- const f_err=(e2, e3, e4, e5) =>f_info(e2,e3,e4,e5,INFO_TYPES.ERROR)
- /**
- * 
- * @param {*} info_type 
- * @param {*} i2 
- * @param {*} i3 
- * @param {*} i4 
- * @param {*} i5 
- */
-function f_info(i2, i3, i4, i5,info_type=INFO_TYPES.INFO) {
-    try{
-        const msg=f_get_msg(i2, i3, i4, i5)
-        
-        console.info(info_type, msg)
-        MODULE_MFILE.f_static_write_log(info_type + ":\r\n" + msg + "\r\n")
-        if(logType==LOG_TYPES.DEBUG||info_type==INFO_TYPES.ERROR){
-            f_show_toast(info_type+msg)
+const f_err = (e2, e3, e4, e5) => f_info(e2, e3, e4, e5, INFO_TYPES.ERROR)
+/**
+* 
+* @param {*} info_type 
+* @param {*} i2 
+* @param {*} i3 
+* @param {*} i4 
+* @param {*} i5 
+*/
+function f_info(i2, i3, i4, i5, info_type = INFO_TYPES.INFO) {
+    try {
+        const msg = f_get_msg(i2, i3, i4, i5)
+
+        //check is log type
+        if (log_type == LOG_TYPES.DEBUG) {
+            //write to conctol
+            console[info_type.toLowerCase()](info_type, msg)
+        } else {
+            f_show_toast(msg)
+            //write to log file
+            MODULE_MFILE.f_static_write_log(info_type + ":\r\n" + msg + "\r\n")
         }
-    }catch(e){
+    } catch (e) {
         f_err(e)
     }
 }
@@ -51,14 +55,14 @@ function f_info(i2, i3, i4, i5,info_type=INFO_TYPES.INFO) {
  * @param {*} e5 
  * @returns 
  */
- const f_get_msg=(e1, e2, e3, e4, e5) =>(f_err_to_str(e1) + "," + f_err_to_str(e2) + "," + f_err_to_str(e3) 
- + "," + f_err_to_str(e4) + "," + f_err_to_str(e5)).replaceAll(/,,/g, ",")
+const f_get_msg = (e1, e2, e3, e4, e5) => (f_err_to_str(e1) + "," + f_err_to_str(e2) + "," + f_err_to_str(e3)
+    + "," + f_err_to_str(e4) + "," + f_err_to_str(e5)).replaceAll(/,,/g, ",")
 /**
  * 
  * @param {*} e 
  * @returns 
  */
- function f_err_to_str(e) {
+function f_err_to_str(e) {
     try {
         if (e == null) {
             return ""
@@ -77,7 +81,8 @@ function f_info(i2, i3, i4, i5,info_type=INFO_TYPES.INFO) {
 
 /**
  * 
- * @param {*} options 
+ * @param {string} title 
+ * @param {object} options 
  * 	属性	类型	默认值	必填	说明	最低版本
  *  title	string		是	提示的内容	
  *  icon	string	success	否	图标	
@@ -91,14 +96,14 @@ function f_info(i2, i3, i4, i5,info_type=INFO_TYPES.INFO) {
  *  mask	boolean	false	否	是否显示透明蒙层，防止触摸穿透
  *  success	function		否	接口调用成功的回调函数
  *  fail	function		否	接口调用失败的回调函数
- *  complete	function		否	接口调用结束的回调函数（调用成功、失败都会执行）
+ *  complete	function		否	接口调用结束的回调函数（调用成功、失败都会执行） 
  * @returns 
  */
-const f_show_toast=(title,options={})=>wx.showToast(Object.assign({title:title,icon:"error"},options))
+const f_show_toast = (title, options = {}) => wx.showToast(Object.assign({ title: title, icon: "error" }, options))
 
 /**
  * 
- * @param {*} options
+ * @param {object} options
  *  属性	类型	默认值	必填	说明	最低版本
  *  title	string		否	提示的标题	
  *  content	string		否	提示的内容	
@@ -114,11 +119,11 @@ const f_show_toast=(title,options={})=>wx.showToast(Object.assign({title:title,i
  *  complete	function		否	接口调用结束的回调函数（调用成功、失败都会执行）	
  * @returns 
  */
-const f_show_modal=(options)=>wx.showModal(options)
+const f_show_modal = (options) => wx.showModal(options)
 
 /**
  * 
- * @param {*} options
+ * @param {object} options
  属性	类型	默认值	必填	说明	最低版本
 alertText	string		否	警示文案	2.14.0
 itemList	Array.<string>		是	按钮的文字数组，数组长度最大为 6	
@@ -129,59 +134,62 @@ complete	function		否	接口调用结束的回调函数（调用成功、失败
  
  */
 function f_show_sheet(options) {
-    try{
-        const MAX_LENGTH=6
-        const LAST_PAGE="下一页"
-
-        if(options.itemList.length>MAX_LENGTH||options.itemList[MAX_LENGTH-1]==LAST_PAGE){
-            if(options.itemListBak==null){
-                options.itemListBak=options.itemList
-                options.itemPage=1
-                options.success=(r)=>{
-                    try{
-                        if(options.itemList[r.tapIndex]==LAST_PAGE){
-                            options.itemPage+=1
+    try {
+        //check itemList.length>6
+        if (options.itemList.length > MAX_LENGTH || options.itemList[MAX_LENGTH - 1] == NEXT_OPTION) {
+            const MAX_LENGTH = 6
+            const NEXT_OPTION = "下一页"
+            //init page info
+            if (options.itemListCopy == null) {
+                options.itemListCopy = options.itemList
+                options.page = 1
+                options.success = (r) => {
+                    try {
+                        if (options.itemList[r.tapIndex] == NEXT_OPTION) {
+                            options.page += 1
                             f_show_sheet(options)
-                        }else{
-                            options.successBak(r)
+                        } else {
+                            options.successCopy(r)
                         }
-                    }catch(e){
+                    } catch (e) {
                         f_err(e)
                     }
                 }
             }
-            options.itemList=options.itemListBak.filter((v,i)=>i<(options.itemPage*MAX_LENGTH))
-            .map((v,i)=>(i+1==MAX_LENGTH)?LAST_PAGE:v)
+            //add next page
+            options.itemList = options.itemListCopy.filter((v, i) => i < (options.page * MAX_LENGTH))
+                .map((v, i) => (i + 1 == MAX_LENGTH) ? NEXT_OPTION : v)
         }
 
+        //show sheet
         wx.showActionSheet(options)
-    }catch(e){
+    } catch (e) {
         f_err(e)
     }
 }
 
 
 
-module.exports.f_static_init = function (s_logType=LOG_TYPES.DEBUG) {
+module.exports.f_static_init = function (s_logType = LOG_TYPES.DEBUG) {
     try {
-        switch (s_logType.toUpperCase()){
+        switch (s_logType.toUpperCase()) {
             case LOG_TYPES.DEBUG:
-                logType=LOG_TYPES.DEBUG;
+                log_type = LOG_TYPES.DEBUG;
                 break;
             default:
-                logType=LOG_TYPES.INFO;
+                log_type = LOG_TYPES.INFO;
                 break;
         }
         f_info("init module mlog...")
-        f_info("switch mlog type",logType)
+        f_info("switch mlog type", log_type)
     } catch (e) {
         f_err(e)
     }
 }
 module.exports.f_static_info = f_info
 module.exports.f_static_err = f_err
-module.exports.f_static_get_msg=f_get_msg
-module.exports.f_static_get_types=()=> LOG_TYPES
-module.exports.f_static_show_toast=f_show_toast
-module.exports.f_static_show_modal=f_show_modal
-module.exports.f_static_show_sheet=f_show_sheet
+module.exports.f_static_get_msg = f_get_msg
+module.exports.f_static_get_types = () => LOG_TYPES
+module.exports.f_static_show_toast = f_show_toast
+module.exports.f_static_show_modal = f_show_modal
+module.exports.f_static_show_sheet = f_show_sheet
