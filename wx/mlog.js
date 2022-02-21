@@ -16,7 +16,9 @@ var log_type = LOG_TYPES.DEBUG
  * @param  {...any} args 
  * @returns 
  */
-const f_err = (...args) => f_info(args.concat(INFO_TYPES.ERROR))
+const f_err = (...args) => {
+    f_info(args.concat(INFO_TYPES.ERROR))
+}
 /**
  * 
  * @param  {...any} args 
