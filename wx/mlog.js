@@ -24,7 +24,7 @@ const f_err = (...args) => f_info(args.concat(INFO_TYPES.ERROR))
 function f_info(...args) {
     try {
         const info_type = INFO_TYPES[args[args.length-1]]!=null?args.pop():INFO_TYPES.INFO
-        const msg = args.map(o=>f_obj_to_str(o)).join(",").replaceAll(/,,/g,",")
+        const msg = args.map(o=>f_to_str(o)).join(",").replaceAll(/,,/g,",")
         //check is log type
         if (log_type == LOG_TYPES.DEBUG) {
             //write to conctol
@@ -37,7 +37,23 @@ function f_info(...args) {
             MODULE_MFILE.f_static_writefile(log_path,time_str+" "+info_type + ":\r\n" + msg + "\r\n",true,"utf8",false)
         }
     } catch (e) {
-        f_show_loading(f_obj_to_str(e))
+        f_show_loading(f_to_str(e))
+    }
+}
+/**
+ * 
+ * @param {object} o 
+ * @returns 
+ */
+function f_to_str(o) {
+    if (o == null) {
+        return ""
+    } else if (o instanceof TypeError || o.stack != null) {
+        return o.stack
+    } else if (o instanceof Error || o.errMsg != null || o.message != null) {//yun err
+        return o.errMsg || o.message
+    } else {
+        return o
     }
 }
 
@@ -113,7 +129,7 @@ function f_show_sheet(options) {
                             options.successCopy(r)
                         }
                     } catch (e) {
-                        f_show_loading(f_obj_to_str(e))
+                        f_show_loading(f_to_str(e))
                     }
                 }
             }
