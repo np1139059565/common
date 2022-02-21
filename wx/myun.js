@@ -4,25 +4,10 @@ const YUN_ID="yfwq1-4nvjm",
       MODULE_MLOG = require("mlog.js")
 
 
-/**
- *
- * @param i1
- * @param i2
- * @param i3
- * @param i4
- */
- const f_info = (i1, i2, i3, i4) => MODULE_MLOG.f_static_info(i1, i2, i3, i4)
 
- /**
-  * 
-  * @param {*} e1 
-  * @param {*} e2 
-  * @param {*} e3 
-  * @param {*} e4 
-  * @returns 
-  */
- const f_err = (e1, e2, e3, e4) => MODULE_MLOG.f_static_err(e1, e2, e3, e4)
-
+//此时MODULE_MLOG还是空的，所以不能直接赋值，必须当做函数调用
+const f_err=(...args)=>MODULE_MLOG.f_static_err(args)
+const f_info=(...args)=>MODULE_MLOG.f_static_info(args)
 
 /**
  *
@@ -31,39 +16,34 @@ const YUN_ID="yfwq1-4nvjm",
  * @param callback
  */
  function f_run_wx_yun_event(eventName, data, callback) {
+    f_info("f_run_wx_yun_event...")
     const mcallback = (code1,data1) => {
         if (typeof callback == "function") {
             callback(code1,data1)
         }
     }
-    try {
-        f_info("f_run_wx_yun_event...")
-        wx.cloud.callFunction({
-            name: eventName,//云函数名 对应 ../appname/cloudfunctions/*
-            data: data,//合并入云函数的event 如果包含大数据字段（建议临界值 256KB）建议使用 wx.cloud.CDN 标记大数据字段
-            complete: (r) => {
-                // r:
-                //      errMsg: "cloud.callFunction:ok"
-                //      requestID: "a8c535b2-6b46-11eb-8a7e-525400549ebe"
-                //      result: 
-                //      data: [{…}]
-                //      errMsg: "collection.get:ok"
-                try {
-                    var code = r.errMsg.endsWith(":ok")
-                    if (!code) {
-                        f_err(r.errMsg)
-                    }
-                    mcallback(code, r)
-                } catch (e) {
-                    f_err(e)
-                    mcallback(false)
+    wx.cloud.callFunction({
+        name: eventName,//云函数名 对应 ../appname/cloudfunctions/*
+        data: data,//合并入云函数的event 如果包含大数据字段（建议临界值 256KB）建议使用 wx.cloud.CDN 标记大数据字段
+        complete: (r) => {
+            // r:
+            //      errMsg: "cloud.callFunction:ok"
+            //      requestID: "a8c535b2-6b46-11eb-8a7e-525400549ebe"
+            //      result: 
+            //      data: [{…}]
+            //      errMsg: "collection.get:ok"
+            try {
+                var code = r.errMsg.endsWith(":ok")
+                if (!code) {
+                    f_err(r.errMsg)
                 }
+                mcallback(code, r)
+            } catch (e) {
+                f_err(e)
+                mcallback(false)
             }
-        })
-    } catch (e) {
-        f_err(e)
-        mcallback(false)
-    }
+        }
+    })
 }
 
 /**

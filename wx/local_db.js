@@ -1,23 +1,26 @@
 const MODULE_MLOG = require("mlog.js"),
     MODULE_MFILE = require("wx_file.js"),
     MODULE_MYUN = require("myun.js"),
-    LOCAL_TABLES = {},
-    f_err=MODULE_MLOG.f_static_err,
-    f_info=MODULE_MLOG.f_static_info
+    LOCAL_TABLE_FILE="/.tables"
 
+var local_tables = {},
+    db_name = null
 
-var dbName = null
-
-
+//此时MODULE_MLOG还是空的，所以不能直接赋值，必须当做函数调用
+const f_err=(...args)=>MODULE_MLOG.f_static_err(args)
+const f_info=(...args)=>MODULE_MLOG.f_static_info(args)
 function f_refush_local_db(callback) {
     f_info("refush local db...")
     f_query_wx_yun_db((code, r) => {
         if(code){
+            //write local table
             r.map(tableInfo=>{
-                const tableName=tableInfo._id
-                LOCAL_TABLES[tableName]=tableName
-                MODULE_MFILE.f_static_writefile(MODULE_MFILE.f_static_get_absolute_path(dbName + "/" + tableName), JSON.stringify(r))
+                const table_name=tableInfo._id
+                local_tables[table_name]=table_name
+                MODULE_MFILE.f_static_writefile(MODULE_MFILE.f_static_get_absolute_path(db_name + "/" + table_name), JSON.stringify(r))
             })
+            MODULE_MFILE.f_static_writefile(MODULE_MFILE.f_static_get_absolute_path(db_name + LOCAL_TABLE_FILE), JSON.stringify(local_tables))
+
         }
         if(typeof callback=="function"){
             callback(code)
@@ -31,7 +34,7 @@ function f_refush_local_db(callback) {
  * @returns 
  */
 function f_query_local_table(tableName) {
-    return MODULE_MFILE.f_static_readfile(dbName +"/"+ tableName)
+    return MODULE_MFILE.f_static_readfile(db_name +"/"+ tableName)
 }
 
 /**
@@ -69,7 +72,7 @@ const f_query_wx_yun_table=(tableName,callback)=>f_query_wx_yun_db((code,rdata)=
  * @returns code,arr
  */
 const f_query_wx_yun_db=(callback,params=null) =>MODULE_MYUN.f_run_wx_yun_event("wx_yun_db", Object.assign({
-    database: dbName,
+    database: db_name,
     querytype: "get",
     geo: {}//空geo代表查询所有表格的数据
 },params), (code, rdata) => {
@@ -87,6 +90,11 @@ const f_query_wx_yun_db=(callback,params=null) =>MODULE_MYUN.f_run_wx_yun_event(
     }
 })
 
+function f_check_local_tables(){
+    const tables_path=MODULE_MFILE.f_static_get_absolute_path(db_name+LOCAL_TABLE_FILE)
+    return MODULE_MFILE.f_static_isexist(tables_path)&&(Object.assign(local_tables,JSON.parse(MODULE_MFILE.f_static_readfile(tables_path))))
+        .filter(tableName=>MODULE_MFILE.f_static_isexist(MODULE_MFILE.f_static_get_absolute_path(db_name+"/"+tableName))!=true).length==0
+}
 
 module.exports.f_static_init = (dbName1, callback) => {
     const mcallback = (code) => {
@@ -99,26 +107,22 @@ module.exports.f_static_init = (dbName1, callback) => {
             callback(code)
         }
     }
-    try {
-        f_info("init local_db...")
+    f_info("init local_db...")
 
-        if (dbName1 != null) {
-            dbName = dbName1
-            f_info("switch local database path", MODULE_MFILE.f_static_get_absolute_path(dbName))
+    if (dbName1 != null) {
+        db_name = dbName1
+        f_info("switch local database path", MODULE_MFILE.f_static_get_absolute_path(db_name))
 
-            //refush local db
-            if (false == MODULE_MFILE.f_static_f_isdir(MODULE_MFILE.f_static_get_absolute_path(dbName))) {
-                f_info("init local db..")
-                f_refush_local_db(mcallback)
-            } else mcallback(true)
-        } else {
-            mcallback(false, "database name is null!")
-        }
-    } catch (e) {
-        f_err(e)
-        mcallback(0, MODULE_MLOG.f_static_get_msg(e))
+        //check local db
+        if (MODULE_MFILE.f_static_isdir(MODULE_MFILE.f_static_get_absolute_path(db_name))&&f_check_local_tables())
+            mcallback(true)
+        else {
+            f_refush_local_db(mcallback)
+        } 
+    } else {
+        mcallback(false, "database name is null!")
     }
 }
 module.exports.f_static_get_tables = () => {
-    return LOCAL_TABLES
+    return local_tables
 }

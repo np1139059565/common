@@ -4,8 +4,9 @@ const USER_DIR = wx.env.USER_DATA_PATH,
     MODULE_MLOG = require("mlog.js")
 
 
-const f_err=MODULE_MLOG.f_static_err
-const f_info=MODULE_MLOG.f_static_info
+//此时MODULE_MLOG还是空的，所以不能直接赋值，必须当做函数调用
+const f_err=(...args)=>MODULE_MLOG.f_static_err(args)
+const f_info=(...args)=>MODULE_MLOG.f_static_info(args)
 /**
  * 
  * 类型 属性		默认值	必填	说明
@@ -49,7 +50,7 @@ const f_info=MODULE_MLOG.f_static_info
  * @param {*} path
  * @returns 
  */
-const f_to_absolute_path = (path="") => (path.startsWith(USER_DIR)||path.startsWith("/") ? "" : (USER_DIR + "/")) + path
+const f_to_absolute_path = (path="") => ((path.startsWith(USER_DIR)||path.startsWith("/") ? "" : (USER_DIR + "/")) + path).replace(/\/\//g,"/")
 /**
  * 
  * @param {*} path 
@@ -340,4 +341,4 @@ module.exports.f_static_readdir = f_readdir
 module.exports.f_static_readfile = f_readfile
 module.exports.f_static_getstat = f_get_stat
 module.exports.f_static_isexist = f_is_exist
-module.exports.f_static_f_isdir = f_is_dir
+module.exports.f_static_isdir = f_is_dir
