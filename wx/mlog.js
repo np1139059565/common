@@ -23,6 +23,10 @@ const f_err = (...args) => f_info(args.concat(INFO_TYPES.ERROR))
  */
 function f_info(...args) {
     try {
+        //弥补不定参数调用不定参数的缺陷
+        if(args instanceof Array&&args[0] instanceof Array&&args.length==1){
+            args[0].map((v,i)=>args.splice(i,i>0?0:1,v))
+        }
         const info_type = INFO_TYPES[args[args.length-1]]!=null?args.pop():INFO_TYPES.INFO
         const msg = args.map(o=>f_to_str(o)).join(",").replaceAll(/,,/g,",")
         //check is log type
