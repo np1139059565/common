@@ -168,6 +168,19 @@ function f_show_sheet(options) {
     }
 }
 
+/**
+ * 
+ * @param {string} title 
+ * @param {*} options 
+ * 属性	类型	默认值	必填	说明
+ * title	string		是	提示的内容
+ * mask	boolean	false	否	是否显示透明蒙层，防止触摸穿透
+ * success	function		否	接口调用成功的回调函数
+ * fail	function		否	接口调用失败的回调函数
+ * complete	function		否	接口调用结束的回调函数（调用成功、失败都会执行）
+ * @returns 
+ */
+const f_show_loading=(title,options)=>wx.showLoading(Object.assign({title:title},options))
 
 
 module.exports.f_static_init = function (s_logType = LOG_TYPES.DEBUG) {
@@ -193,3 +206,4 @@ module.exports.f_static_get_log_types = () => LOG_TYPES
 module.exports.f_static_show_toast = f_show_toast
 module.exports.f_static_show_modal = f_show_modal
 module.exports.f_static_show_sheet = f_show_sheet
+module.exports.f_static_show_loading=f_show_loading
