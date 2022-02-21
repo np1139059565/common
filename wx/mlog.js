@@ -189,7 +189,7 @@ module.exports.f_static_init = function (s_logType = LOG_TYPES.DEBUG) {
 module.exports.f_static_info = f_info
 module.exports.f_static_err = f_err
 module.exports.f_static_get_msg = f_get_msg
-module.exports.f_static_get_types = () => LOG_TYPES
+module.exports.f_static_get_log_types = () => LOG_TYPES
 module.exports.f_static_show_toast = f_show_toast
 module.exports.f_static_show_modal = f_show_modal
 module.exports.f_static_show_sheet = f_show_sheet
