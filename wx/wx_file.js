@@ -32,6 +32,7 @@ const f_info=(...args)=>MODULE_MLOG.f_static_info(args)
  * @returns 
  */
  const f_writefile=(file_path, data, is_add=false, encoding="utf8",is_log=false)=>{
+    file_path=f_to_absolute_path(file_path)
     //check parent path
     const parent_path = file_path.substr(0, file_path.lastIndexOf("/"))
     if (f_is_dir(parent_path) || f_mkdir(parent_path)) {
@@ -39,10 +40,9 @@ const f_info=(...args)=>MODULE_MLOG.f_static_info(args)
         if(!is_log){
             f_info("write file",file_path,is_add,encoding,data.length)
         }
-        FSM[f_is_exist(file_path)&&is_add?"appendFileSync":"writeFileSync"](file_path,data,encoding)
+        FSM[f_isexist(file_path)&&is_add?"appendFileSync":"writeFileSync"](file_path,data,encoding)
     }else throw new TypeError("check parent path is err!")
 }
-
 
 
 /**
@@ -56,9 +56,9 @@ const f_to_absolute_path = (path="") => ((path.startsWith(USER_DIR)||path.starts
  * @param {*} path 
  * @returns 
  */
-const f_is_exist = (path) => {
+const f_isexist = (path) => {
     try{
-        return FSM.accessSync(path) == null
+        return FSM.accessSync(f_to_absolute_path(path)) == null
     }catch(e){
         //垃圾api如果文件不存在则会报错，所以必须用try包着
         if (e.message.indexOf("no such file or directory")==-1) {
@@ -72,7 +72,7 @@ const f_is_exist = (path) => {
  * @param {*} path 
  * @returns 
  */
-const f_mkdir = (path) => FSM.mkdirSync(path, true) == null
+const f_mkdir = (path) => FSM.mkdirSync(f_to_absolute_path(path), true) == null
 
 /**
  * 
@@ -80,7 +80,7 @@ const f_mkdir = (path) => FSM.mkdirSync(path, true) == null
  * @returns 
  */
 const f_is_dir=(path) =>{
-    const file_stat=f_get_stat(path)
+    const file_stat=f_get_stat(f_to_absolute_path(path))
     return file_stat!=null&&file_stat.isDirectory()
 }
 /**
@@ -95,10 +95,13 @@ const f_is_dir=(path) =>{
  * .isFile() 判断当前文件是否一个文件
  */
  const f_get_stat=(path)=>{
-    if(f_is_exist(path)){
+    if(f_isexist(path)){
         return FSM.statSync(f_to_absolute_path(path), false)
     }else return null
  }
+
+
+
 
 
 
@@ -111,7 +114,6 @@ function f_unzip_sync(zipPath, dstPath, callback) {
         }
     }
     try {
-        zipPath = f_to_absolute_path(zipPath)
         //check dst path
         if (false == dstPath.endsWith("/")) {
             dstPath += "/"
@@ -148,48 +150,46 @@ function f_unzip_sync(zipPath, dstPath, callback) {
 }
 
 /**
- *
- * @param dirPath /:代码包文件 ../languageget/miniprogram
+ * 
+ * @param {string} dir_path 
+ * @returns {Array[string]} files
  */
-function f_readdir(dirPath) {
-    try {
-        dirPath = f_to_absolute_path(dirPath)
-        f_info("read dir", dirPath)
-        return f_is_dir(dirPath) ? FSM.readdirSync(dirPath) : []//[p1,p2]
-    } catch (e) {
-        f_err("read dir is err", e)
-        return []
-    }
-}
+const f_readdir=(dir_path)=>FSM.readdirSync(dir_path)//[p1,p2]
 
 /**
- *
- * @param filePath
- * @param encoding binary
- * @returns {string|ArrayBuffer|void}
+ * 	属性	类型	默认值	必填	说明	最低版本
+
+position	number		否	从文件指定位置开始读，如果不指定，则从文件头开始读。读取的范围应该是左闭右开区间 [position, position+length)。有效范围：[0, fileLength - 1]。单位：byte	2.10.0
+length	number		否	指定文件的长度，如果不指定，则读到文件末尾。有效范围：[1, fileLength]。单位：byte	2.10.0
+success	function		否	接口调用成功的回调函数	
+fail	function		否	接口调用失败的回调函数	
+complete	function		否	接口调用结束的回调函数（调用成功、失败都会执行）	
+object.success 回调函数
+
+ * @param {string} file_path 是	要读取的文件的路径 (本地路径)
+ * @param {string} encoding			否	指定读取文件的字符编码，如果不传 encoding，则以 ArrayBuffer 格式读取文件的二进制内容	
+合法值	说明
+ascii	
+base64	
+binary	
+hex	
+ucs2	以小端序读取
+ucs-2	以小端序读取
+utf16le	以小端序读取
+utf-16le	以小端序读取
+utf-8	
+utf8	
+latin1	
+ * @returns 
  */
-function f_readfile(filePath, encoding) {
-    try {
-        filePath = f_to_absolute_path(filePath)
-        f_info("read file", filePath)
-        return FSM.readFileSync(filePath, encoding != null ? encoding : "UTF-8")
-    } catch (e) {
-        f_err("read file is err", e)
-        return (encoding != null ? null : "")
-    }
+function f_readfile(file_path, encoding="utf-8") {
+    f_info("read file...", file_path,encoding)
+    return f_isexist(file_path)?FSM.readFileSync(file_path, encoding):null
 }
-
-
-
-
-
-
-
 
 
 function f_remove_path(path) {
     try {
-        path = f_to_absolute_path(path)
         const pinfo = f_get_stat(path)
         if (pinfo != null) {
             if (pinfo.isDirectory()) {
@@ -213,7 +213,6 @@ function f_remove_path(path) {
 
 function copyFile(srcFPath, dstFPath) {
     try {
-        srcFPath = f_to_absolute_path(srcFPath)
         const srcFileInfo = f_get_stat(srcFPath)
         //check src file is find
         if (srcFileInfo != null && srcFileInfo.isFile()) {
@@ -250,13 +249,12 @@ function copyFile(srcFPath, dstFPath) {
  */
 function copyDir(srcPath, dstPath, upProgressEvent) {
     try {
-        srcPath = f_to_absolute_path(srcPath)
         // check dst path
         if (!dstPath.endsWith("/")) {
             dstPath += "/"
         }
         //check is exist
-        if (f_is_exist(srcPath)) {
+        if (f_isexist(srcPath)) {
             //check is dir
             if (f_is_dir(srcPath)) {
                 // check src path
@@ -326,6 +324,9 @@ function downUrlFileSync(url, localPath, callback) {
 }
 
 
+
+
+
 module.exports.f_static_writefile = f_writefile
 module.exports.f_static_mkdir = f_mkdir
 module.exports.f_static_downUrlFileSync = downUrlFileSync
@@ -340,5 +341,5 @@ module.exports.f_static_get_absolute_path = f_to_absolute_path
 module.exports.f_static_readdir = f_readdir
 module.exports.f_static_readfile = f_readfile
 module.exports.f_static_getstat = f_get_stat
-module.exports.f_static_isexist = f_is_exist
+module.exports.f_static_isexist = f_isexist
 module.exports.f_static_isdir = f_is_dir

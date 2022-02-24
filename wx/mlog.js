@@ -26,11 +26,11 @@ const f_err = (...args) => {
 function f_info(...args) {
     try {
         //弥补不定参数调用不定参数的缺陷
-        if(args instanceof Array&&args[0] instanceof Array&&args.length==1){
-            args[0].map((v,i)=>args.splice(i,i>0?0:1,v))
+        if (args instanceof Array && args[0] instanceof Array && args.length == 1) {
+            args[0].map((v, i) => args.splice(i, i > 0 ? 0 : 1, v))
         }
-        const info_type = INFO_TYPES[args[args.length-1]]!=null?args.pop():INFO_TYPES.INFO
-        const msg = args.map(o=>f_to_str(o)).join(",").replaceAll(/,,/g,",")
+        const info_type = INFO_TYPES[args[args.length - 1]] != null ? args.pop() : INFO_TYPES.INFO
+        const msg = args.map(o => f_to_str(o)).join(",").replaceAll(/,,/g, ",")
         //check is log type
         if (log_type == LOG_TYPES.DEBUG) {
             //write to conctol
@@ -39,11 +39,11 @@ function f_info(...args) {
             f_show_toast(msg)
             //write to log file
             const time_str = new Date().toJSON()
-            const log_path = MODULE_MFILE.f_static_get_absolute_path("MODULE_MLOG/" + time_str.split("T")[0] + ".MODULE_MLOG")    
-            MODULE_MFILE.f_static_writefile(log_path,time_str+" "+info_type + ":\r\n" + msg + "\r\n",true,"utf8",false)
+            const log_path = "MODULE_MLOG/" + time_str.split("T")[0] + ".MODULE_MLOG"
+            MODULE_MFILE.f_static_writefile(log_path, time_str + " " + info_type + ":\r\n" + msg + "\r\n", true, "utf8", false)
         }
     } catch (e) {
-        f_show_loading(f_to_str(e))
+        f_show_toast(f_to_str(e))
     }
 }
 /**
@@ -118,33 +118,36 @@ complete	function		否	接口调用结束的回调函数（调用成功、失败
  
  */
 function f_show_sheet(options) {
-        //check itemList.length>6
-        if (options.itemList.length > MAX_LENGTH || options.itemList[MAX_LENGTH - 1] == NEXT_OPTION) {
-            const MAX_LENGTH = 6
-            const NEXT_OPTION = "下一页"
-            //init page info
-            if (options.itemListCopy == null) {
-                options.itemListCopy = options.itemList
-                options.page = 1
-                options.success = (r) => {
-                    try {
-                        if (options.itemList[r.tapIndex] == NEXT_OPTION) {
-                            options.page += 1
-                            f_show_sheet(options)
-                        } else {
-                            options.successCopy(r)
-                        }
-                    } catch (e) {
-                        f_show_loading(f_to_str(e))
+    //check itemList.length>6
+    if (options.itemList.length > MAX_LENGTH || options.itemList[MAX_LENGTH - 1] == NEXT_OPTION) {
+        const MAX_LENGTH = 6
+        const NEXT_OPTION = "下一页"
+        //init page info
+        if (options.itemListCopy == null) {
+            options.itemListCopy = options.itemList
+            options.successCopy=options.success
+            options.page = 1
+            options.success = (r) => {
+                try {
+                    if (options.itemList[r.tapIndex] == NEXT_OPTION) {
+                        options.page += 1
+                        f_show_sheet(options)
+                    } else {
+                        options.successCopy(r.tapIndex,r)
+                    }
+                } catch (e) {
+                    if(typeof options.fail=="function"){
+                        options.fail(e)
                     }
                 }
             }
-            //add next page
-            options.itemList = options.itemListCopy.filter((v, i) => i < (options.page * MAX_LENGTH))
-                .map((v, i) => (i + 1 == MAX_LENGTH) ? NEXT_OPTION : v)
         }
-        //show sheet
-        wx.showActionSheet(options)
+        //add next page
+        options.itemList = options.itemListCopy.filter((v, i) => i < (options.page * MAX_LENGTH))
+            .map((v, i) => (i + 1 == MAX_LENGTH) ? NEXT_OPTION : v)
+    }
+    //show sheet
+    wx.showActionSheet(options)
 }
 
 /**
@@ -159,7 +162,7 @@ function f_show_sheet(options) {
  * complete	function		否	接口调用结束的回调函数（调用成功、失败都会执行）
  * @returns 
  */
-const f_show_loading=(title,options)=>wx.showLoading(Object.assign({title:title},options))
+const f_show_loading = (title, options) => wx.showLoading(Object.assign({ title: title }, options))
 
 
 module.exports.f_static_init = function (s_logType = LOG_TYPES.DEBUG) {
@@ -180,4 +183,4 @@ module.exports.f_static_get_log_types = () => LOG_TYPES
 module.exports.f_static_show_toast = f_show_toast
 module.exports.f_static_show_modal = f_show_modal
 module.exports.f_static_show_sheet = f_show_sheet
-module.exports.f_static_show_loading=f_show_loading
+module.exports.f_static_show_loading = f_show_loading
