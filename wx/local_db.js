@@ -17,14 +17,14 @@ function f_download_db(callback) {
             callback(code,r)
         }
     }
-    f_query_wx_yun_db((code, r) => {
+    f_query_wx_yun_db((code, arr) => {
         try{
             if(code){
                 //write local table
-                r.map(tableInfo=>{
+                arr.map(tableInfo=>{
                     const table_name=tableInfo._id
                     local_tables[table_name]=table_name
-                    MODULE_MFILE.f_static_writefile(db_name + "/" + table_name, JSON.stringify(r))
+                    MODULE_MFILE.f_static_writefile(db_name + "/" + table_name, JSON.stringify(arr))
                 })
                 MODULE_MFILE.f_static_writefile(db_name + TABLE_PATH, JSON.stringify(local_tables))
                 mcallback(code)
@@ -35,40 +35,6 @@ function f_download_db(callback) {
         }
     })
 }
-
-/**
- * 
- * @param {*} tableName 
- * @returns 
- */
-function f_query_local_table(tableName) {
-    return MODULE_MFILE.f_static_readfile(db_name +"/"+ tableName)
-}
-
-/**
- * 
- * @param {*} tableName 
- * @param {*} callback 
- * @returns 
- */
-const f_query_wx_yun_table=(tableName,callback)=>f_query_wx_yun_db((code,rdata)=>{
-    const mcallback=(code,r)=>{
-        if(typeof callback=="function"){
-            callback(code,r)
-        }
-    }
-    try{
-        if (rdata.length == 0) {
-            code = false
-            rdata="not find table"
-        }
-        mcallback(code,rdata)
-    }catch(e){
-        f_err(e)
-        mcallback(false,e)
-    }
-},{geo:{"where": { "_id": tableName }}})
-
 /**
  *
  * @param {*} callback  
@@ -87,7 +53,7 @@ const f_query_wx_yun_table=(tableName,callback)=>f_query_wx_yun_db((code,rdata)=
  *                  doc
  * @returns code,arr
  */
-const f_query_wx_yun_db=(callback,params=null) =>MODULE_MYUN.f_run_wx_yun_event("wx_yun_db", Object.assign({
+ const f_query_wx_yun_db=(callback,params=null) =>MODULE_MYUN.f_run_wx_yun_event("wx_yun_db", Object.assign({
     database: db_name,
     querytype: "get",
     geo: {}//空geo代表查询所有表格的数据
@@ -114,13 +80,48 @@ const f_query_wx_yun_db=(callback,params=null) =>MODULE_MYUN.f_run_wx_yun_event(
     }
 })
 
+/**
+ * 
+ * @param {*} tableName 
+ * @param {*} callback 
+ * @returns 
+ */
+ const f_query_wx_yun_table=(tableName,callback)=>f_query_wx_yun_db((code,rdata)=>{
+    const mcallback=(code,r)=>{
+        if(typeof callback=="function"){
+            callback(code,r)
+        }
+    }
+    try{
+        if (rdata.length == 0) {
+            code = false
+            rdata="not find table"
+        }
+        mcallback(code,rdata)
+    }catch(e){
+        f_err(e)
+        mcallback(false,e)
+    }
+},{geo:{"where": { "_id": tableName }}})
+
+
+/**
+ * 
+ * @param {*} tableName 
+ * @returns 
+ */
+function f_query_local_table(tableName) {
+    return MODULE_MFILE.f_static_readfile(db_name +"/"+ tableName)
+}
+
+
 function f_check_local_tables(){
     //loading table names...
     const table_name_path=db_name+TABLE_PATH
     Object.assign(local_tables,JSON.parse(MODULE_MFILE.f_static_readfile(table_name_path)))
 
     //check tables...
-    return local_tables.map(table_name=>MODULE_MFILE.f_static_isexist(db_name+"/"+table_name)).filter(r=>!r).length==0
+    return Object.values(local_tables).map(table_name=>MODULE_MFILE.f_static_isexist(db_name+"/"+table_name)).filter(r=>!r).length==0
 }
 
 
