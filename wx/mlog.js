@@ -17,6 +17,10 @@ var log_type = LOG_TYPES.DEBUG
  * @returns 
  */
 const f_err = (...args) => {
+    //非调试状态下发生异常则立即退出
+    if(log_type!=LOG_TYPES.DEBUG){
+        f_show_loading("请退出重新打开试试!",{mask:true})
+    }
     f_info(args.concat(INFO_TYPES.ERROR))
 }
 /**
